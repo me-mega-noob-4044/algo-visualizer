@@ -62,6 +62,7 @@ var Pathfinder = new class {
     constructor() {
         this.openSet = [];
         this.intervel = null;
+        this.pathMap = new Map();
     }
 
     getNeighbors(bestNode) {
@@ -95,20 +96,26 @@ var Pathfinder = new class {
             for (let i = 0; i < neighbors.length; i++) {
                 let neighbor = neighbors[i];
 
-                neighbor.gScore = distance(bestNode, neighbor);
+                neighbor.gScore = distance(bestNode, neighbor) + bestNode.gScore;
                 neighbor.hScore = distance(endNode, neighbor);
                 neighbor.fScore = neighbor.gScore + neighbor.hScore;
                 neighbor.gridItem.classList.add("explored");
 
-                neighbor.previous = bestNode;
+                if (neighbor.gScore < (this.pathMap.get(neighbor) || Infinity)) {
+                    neighbor.previous = bestNode;
+                    this.pathMap.set(neighbor, neighbor.gScore);
+                    neighbor.gridItem.classList.add("explored");
+                    
+                    if (neighbor === endNode) {
+                        this.tracePath(neighbor);
+                        this.openSet = [];
+                        return;
+                    }
 
-                if (neighbor == endNode) {
-                    this.openSet = [];
-                    this.tracePath(neighbor);
-                    break;
+                    if (!this.openSet.includes(neighbor)) {
+                        this.openSet.push(neighbor);
+                    }
                 }
-
-                this.openSet.push(neighbor);
             }
 
             let indx = this.openSet.findIndex(e => e == bestNode);
@@ -120,11 +127,15 @@ var Pathfinder = new class {
     }
 
     start() {
+        startNode.gScore = 0;
+        startNode.hScore = distance(endNode, startNode);
+        startNode.fScore = startNode.gScore + startNode.hScore;
+
         this.openSet.push(startNode);
 
         setInterval(() => {
             this.find();
-        }, 150);
+        }, 50);
     }
 };
 
